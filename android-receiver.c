@@ -261,5 +261,7 @@ int main(int argc, char *argv[]) { /* {{{ */
         wait(0);
     }
     EVP_CIPHER_CTX_cleanup(&ctx);
+    free(plain);
+    free(key_data);
 }
 /* }}} */
