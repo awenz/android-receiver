@@ -210,8 +210,8 @@ int main(int argc, char *argv[]) { /* {{{ */
 
     EVP_CIPHER_CTX ctx;
 
-    unsigned char *key_data = (unsigned char*)"varda";
-    int key_data_len = strlen("varda");
+    unsigned char *key_data = (unsigned char*)"your passphrase";
+    int key_data_len = strlen("your passphrase");
     int len=1024;
     
     if(key_init(key_data, key_data_len, &ctx)){
