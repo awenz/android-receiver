@@ -251,10 +251,7 @@ int main(int argc, char *argv[]) { /* {{{ */
         if (fork() == 0) {
             if (fork() == 0) {
                 len = strlen(buf)+1;
-                printf("%d\n",len);
-                printf("%s\n",buf);
                 plain=(char *)decrypt(&ctx,ubuf,&len);
-                printf("%s\n",plain);
                 message = parse_message(plain);
                 handle_message(message);
                 exit(EXIT_SUCCESS);
