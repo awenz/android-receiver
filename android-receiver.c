@@ -4,17 +4,20 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <string.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
 #include <getopt.h>
 #include <errno.h>
+#include <openssl/evp.h>
 
 #define DEBUG    0
 #define MAXBUF   1024
 #define TOK      "/"
 #define FMTCALL  "  -!-  Call from %s"
 #define FMTOTHER "  -!-  %s"
+#define AES_BLOCK_SIZE 128
 
 #define STREQ(a, b)     strcmp((a),(b)) == 0
 #define STRDUP(a, b)    if ((b)) a = strdup((b))
@@ -174,11 +177,46 @@ static void handle_message(struct message_t *message) { /* {{{ */
 }
 /* }}} */
 
+static int key_init(unsigned char *key_data, int key_data_len, EVP_CIPHER_CTX *ctx) {
+    int i, nrounds = 10;
+    unsigned char key[16], iv[16];
+    i = EVP_BytesToKey(EVP_aes_128_cbc(), EVP_md5(), NULL, key_data, key_data_len, nrounds, key, iv);
+    printf("Key is %d bytes\n",i);
+    EVP_CIPHER_CTX_init(ctx);
+    EVP_DecryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, key, iv);
+
+    return 0;
+}
+
+static unsigned char *decrypt(EVP_CIPHER_CTX *ctx, unsigned char *ciphertext, int *len){
+    int p_len = *len, f_len = 0;
+    unsigned char *plaintext = malloc(p_len + AES_BLOCK_SIZE);
+    
+    EVP_DecryptInit_ex(ctx, NULL, NULL, NULL, NULL);
+    EVP_DecryptUpdate(ctx, plaintext, &p_len, ciphertext, *len);
+    EVP_DecryptFinal_ex(ctx, plaintext+p_len, &f_len);
+
+    *len = p_len + f_len;
+    return plaintext;
+}
+
 int main(int argc, char *argv[]) { /* {{{ */
     char buf[MAXBUF];
+    char *plain;
+    unsigned char *ubuf = (unsigned char *)buf;
 
     struct message_t    *message;
     struct sockaddr_in  server, from;
+
+    EVP_CIPHER_CTX ctx;
+
+    unsigned char *key_data = (unsigned char*)"varda";
+    int key_data_len = strlen("varda");
+    int len=1024;
+    
+    if(key_init(key_data, key_data_len, &ctx)){
+        printf("Key creation failed\n");
+    }
 
     int          sock, n;
     unsigned int fromlen = sizeof from;
@@ -212,7 +250,12 @@ int main(int argc, char *argv[]) { /* {{{ */
          * without requiring a signal handler. */
         if (fork() == 0) {
             if (fork() == 0) {
-                message = parse_message(buf);
+                len = strlen(buf)+1;
+                printf("%d\n",len);
+                printf("%s\n",buf);
+                plain=(char *)decrypt(&ctx,ubuf,&len);
+                printf("%s\n",plain);
+                message = parse_message(plain);
                 handle_message(message);
                 exit(EXIT_SUCCESS);
             }
@@ -220,5 +263,6 @@ int main(int argc, char *argv[]) { /* {{{ */
         }
         wait(0);
     }
+    EVP_CIPHER_CTX_cleanup(&ctx);
 }
 /* }}} */
