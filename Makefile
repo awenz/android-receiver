@@ -11,7 +11,7 @@ all: android-receiver
 
 ${OBJ}: config.mk
 mail-query: ${OBJ}
-	${CC} -o $@ ${OBJ} ${LDFLAGS}
+	${CC} -o $@ ${OBJ} ${LDFLAGS} ${CFLAGS}
 
 
 clean:
