@@ -25,7 +25,6 @@
 #define STRDUP(a, b)    if ((b)) a = strdup((b))
 
 static int  portno = 10600;
-static char *handler;
 
 enum etype {
     Ring,
@@ -73,11 +72,6 @@ static int parse_options(int argc, char *argv[]) {
                 fprintf(stderr, "invalid option, try -h or --help\n");
                 exit(EXIT_FAILURE);
         }
-    }
-
-    if (!handler) {
-        fprintf(stderr, "error: handler is required\n\n");
-        return 1;
     }
 
     return 0;
