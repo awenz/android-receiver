@@ -18,6 +18,9 @@ ${OBJ}: config.mk
 mail-query: ${OBJ}
 	${CC} -o $@ ${OBJ} ${LDFLAGS} ${CFLAGS}
 
+ad-enc: ${OBJ} 
+	${CC} -o $@ ${OBJ} ${LDFLAGS} ${CFLAGS}
+
 
 clean:
 	rm -f android-receiver ${OBJ}
