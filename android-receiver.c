@@ -137,33 +137,42 @@ static void handle_message(char *msg) {
 
     struct message_t *message;
     char *title;
+    char *icon;
 
     message = parse_message(msg);
 
     switch (message->event_type) {
         case Ring:
             asprintf(&title, "Call: %s", message->data);
+            icon = "call-start";
             break;
 
         case SMS:
             asprintf(&title, "SMS: %s", message->data);
+            icon = "stock_mail-unread";
             break;
         case MMS:
             asprintf(&title, "MMS: %s", message->data);
+            icon = "stock_mail-unread";
             break;
         case Battery:
             asprintf(&title, "Battery: %s", message->data);
+            icon = "battery-good"; // TODO: various levels and charge-state
             break;
         case Ping:
             title = "Ping";
+            icon = "emblem-important";
             break;
 
         default:
             return;
     }
 
-    NotifyNotification *n = notify_notification_new(title, message->event_contents, NULL);
+    notify_init("android-receiver");
+    NotifyNotification *n = notify_notification_new(title, message->event_contents, icon);
     notify_notification_show(n, NULL);
+    g_object_unref(G_OBJECT(n));
+    notify_uninit();
 }
 /* }}} */
 
@@ -229,8 +238,6 @@ int main(int argc, char *argv[]) { /* {{{ */
         perror("error binding to socket");
         exit(EXIT_FAILURE);
     }
-
-    notify_init("android-receiver");
 
     while (1) {
         while ((n = recvfrom(sock, buf, 1024, 0, (struct sockaddr *)&from, &fromlen)) < 0 && errno == EINTR)
